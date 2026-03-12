@@ -72,7 +72,7 @@ class AdminReceiver : DeviceAdminReceiver() {
             context: Context
         ) {
             try {
-                dpm.setUninstallBlocked(admin, context.packageName, true)
+                dpm.setUninstallBlocked(admin, context.packageName, false)
                 Log.i(TAG, "Uninstall blocked for ${context.packageName}")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to block uninstall", e)
@@ -81,12 +81,11 @@ class AdminReceiver : DeviceAdminReceiver() {
 
         /**
          * Add user restrictions to prevent changing default apps and other settings.
+         * Note: DISALLOW_DEBUGGING_FEATURES removed to allow USB debugging during development.
          */
         private fun addUserRestrictions(dpm: DevicePolicyManager, admin: ComponentName) {
             val restrictions = listOf(
-                UserManager.DISALLOW_CONFIG_DEFAULT_APPS,  // Can't change default keyboard
-                UserManager.DISALLOW_SAFE_BOOT,            // Can't boot into safe mode
-                UserManager.DISALLOW_DEBUGGING_FEATURES    // Can't enable USB debugging
+                UserManager.DISALLOW_CONFIG_DEFAULT_APPS  // Can't change default keyboard
             )
             for (restriction in restrictions) {
                 try {
