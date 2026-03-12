@@ -1,42 +1,32 @@
 /**
- * Authentication module — Supabase email/password auth.
+ * Authentication — simple hardcoded username/password gate.
  */
 const SafeTypeAuth = {
-    client: null,
+    _loggedIn: false,
 
-    init(supabaseClient) {
-        this.client = supabaseClient;
+    init() {
+        // Nothing to initialize
     },
 
-    async signIn(email, password) {
-        const { data, error } = await this.client.auth.signInWithPassword({
-            email, password
-        });
-        if (error) throw error;
-        return data;
-    },
-
-    async signUp(email, password) {
-        const { data, error } = await this.client.auth.signUp({
-            email, password
-        });
-        if (error) throw error;
-        return data;
+    async signIn(username, password) {
+        if (username === 'username' && password === 'password') {
+            this._loggedIn = true;
+            sessionStorage.setItem('safetype_auth', '1');
+            return true;
+        }
+        throw new Error('Invalid username or password');
     },
 
     async signOut() {
-        const { error } = await this.client.auth.signOut();
-        if (error) throw error;
+        this._loggedIn = false;
+        sessionStorage.removeItem('safetype_auth');
     },
 
     async getSession() {
-        const { data: { session } } = await this.client.auth.getSession();
-        return session;
+        return sessionStorage.getItem('safetype_auth') === '1' ? true : null;
     },
 
     onAuthChange(callback) {
-        this.client.auth.onAuthStateChange((_event, session) => {
-            callback(session);
-        });
+        // Not needed for simple auth — handled by signIn/signOut directly
     }
 };

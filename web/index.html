@@ -17,27 +17,14 @@
             </div>
             <form id="login-form">
                 <div class="input-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" placeholder="parent@email.com" required>
+                    <label for="email">Username</label>
+                    <input type="text" id="email" placeholder="username" required>
                 </div>
                 <div class="input-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" placeholder="••••••••" required>
                 </div>
                 <button type="submit" class="btn-primary">Sign In</button>
-                <p class="signup-link">No account? <a href="#" id="show-signup">Sign Up</a></p>
-            </form>
-            <form id="signup-form" style="display:none">
-                <div class="input-group">
-                    <label for="signup-email">Email</label>
-                    <input type="email" id="signup-email" placeholder="parent@email.com" required>
-                </div>
-                <div class="input-group">
-                    <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" placeholder="Min 6 characters" required minlength="6">
-                </div>
-                <button type="submit" class="btn-primary">Create Account</button>
-                <p class="signup-link"><a href="#" id="show-login">Back to Sign In</a></p>
             </form>
             <div id="login-error" class="error-msg" style="display:none"></div>
         </div>
@@ -143,24 +130,7 @@
         </div>
     </div>
 
-    <!-- Config Modal -->
-    <div id="config-modal" class="modal" style="display:none">
-        <div class="modal-content">
-            <h2>Setup</h2>
-            <p>Enter your Supabase credentials to connect:</p>
-            <div class="input-group">
-                <label for="config-url">Supabase URL</label>
-                <input type="text" id="config-url" placeholder="https://xxxxx.supabase.co">
-            </div>
-            <div class="input-group">
-                <label for="config-key">Supabase Anon Key</label>
-                <input type="text" id="config-key" placeholder="eyJhbG...">
-            </div>
-            <button id="btn-save-config" class="btn-primary">Save & Connect</button>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/dashboard.js"></script>
