@@ -1,9 +1,14 @@
 package com.safetype.keyboard
 
 import android.accessibilityservice.AccessibilityService
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.os.Build
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import androidx.core.app.NotificationCompat
 import com.safetype.keyboard.data.DedupEngine
 import com.safetype.keyboard.data.MessageEntity
 import com.safetype.keyboard.data.MessageDatabase
@@ -14,21 +19,21 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
- * AccessibilityService that silently scrapes visible text from chat apps.
+ * AccessibilityService that monitors visible text from chat apps.
  *
- * Appears as "System UI Helper" in Settings > Accessibility.
- * Runs invisibly — no toasts, notifications, or UI.
+ * Shows as "SafeType Parental Monitor" in Settings > Accessibility.
+ * Displays a persistent notification so the child knows monitoring is active.
  *
  * Monitors: WhatsApp, Google Messages, Samsung Messages, Instagram DMs,
- * Snapchat text chats, and falls back to generic scraping for unknown apps.
- *
- * Device Owner auto-enables and locks this service so child cannot disable it.
+ * Snapchat text chats, and falls back to generic scraping for other messaging apps.
  */
 class ScreenScraperService : AccessibilityService() {
 
     companion object {
         private const val TAG = "ScreenScraper"
         private const val DEBOUNCE_MS = 150L
+        private const val CHANNEL_ID = "safetype_monitoring"
+        private const val NOTIFICATION_ID = 1001
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -53,6 +58,42 @@ class ScreenScraperService : AccessibilityService() {
         "com.discord",            // Discord
         "org.telegram.messenger"  // Telegram
     )
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        showMonitoringNotification()
+        Log.i(TAG, "Parental monitoring service connected")
+    }
+
+    /**
+     * Show a persistent notification so the child knows monitoring is active.
+     * This is the key transparency measure — the child always sees this.
+     */
+    private fun showMonitoringNotification() {
+        val nm = getSystemService(NotificationManager::class.java)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.notification_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = getString(R.string.notification_channel_description)
+                setShowBadge(false)
+            }
+            nm.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle(getString(R.string.monitoring_notification_title))
+            .setContentText(getString(R.string.monitoring_notification_text))
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        nm.notify(NOTIFICATION_ID, notification)
+    }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
@@ -155,6 +196,8 @@ class ScreenScraperService : AccessibilityService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.i(TAG, "Accessibility service destroyed")
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.cancel(NOTIFICATION_ID)
+        Log.i(TAG, "Parental monitoring service stopped")
     }
 }

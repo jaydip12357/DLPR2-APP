@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS messages (
     app_source TEXT NOT NULL,
     source_layer TEXT NOT NULL,
     timestamp BIGINT NOT NULL,
+    conversation_hash TEXT,
     is_flagged BOOLEAN DEFAULT NULL,
     flag_reason TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()

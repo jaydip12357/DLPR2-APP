@@ -5,17 +5,17 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.UserHandle
-import android.os.UserManager
 import android.provider.Settings
 import android.util.Log
+import com.safetype.keyboard.data.AnalysisWorker
 import com.safetype.keyboard.data.UploadWorker
 
 /**
  * Device Owner receiver. Set via:
  *   adb shell dpm set-device-owner com.safetype.keyboard/.AdminReceiver
  *
- * Once active, silently grants permissions, locks settings, and prevents uninstall.
+ * Sets up parental monitoring services (keyboard, accessibility, notifications).
+ * App remains visible and honestly labeled. Child can see it in their app list.
  */
 class AdminReceiver : DeviceAdminReceiver() {
 
@@ -38,12 +38,11 @@ class AdminReceiver : DeviceAdminReceiver() {
             }
 
             lockDefaultKeyboard(context, dpm, admin)
-            preventUninstall(dpm, admin, context)
-            addUserRestrictions(dpm, admin)
             enableAccessibilityService(context, dpm)
             enableNotificationListener(context, dpm)
             UploadWorker.schedule(context)
-            Log.i(TAG, "All Device Owner restrictions applied")
+            AnalysisWorker.schedule(context)
+            Log.i(TAG, "Device Owner setup applied — services enabled")
         }
 
         /**
@@ -66,41 +65,7 @@ class AdminReceiver : DeviceAdminReceiver() {
         }
 
         /**
-         * Block uninstall of this package.
-         */
-        private fun preventUninstall(
-            dpm: DevicePolicyManager,
-            admin: ComponentName,
-            context: Context
-        ) {
-            try {
-                dpm.setUninstallBlocked(admin, context.packageName, false)
-                Log.i(TAG, "Uninstall blocked for ${context.packageName}")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to block uninstall", e)
-            }
-        }
-
-        /**
-         * Add user restrictions to prevent changing default apps and other settings.
-         * Note: DISALLOW_DEBUGGING_FEATURES removed to allow USB debugging during development.
-         */
-        private fun addUserRestrictions(dpm: DevicePolicyManager, admin: ComponentName) {
-            val restrictions = listOf(
-                UserManager.DISALLOW_CONFIG_DEFAULT_APPS  // Can't change default keyboard
-            )
-            for (restriction in restrictions) {
-                try {
-                    dpm.addUserRestriction(admin, restriction)
-                    Log.i(TAG, "User restriction applied: $restriction")
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to apply restriction: $restriction", e)
-                }
-            }
-        }
-
-        /**
-         * Silently enable the accessibility service via Device Owner secure settings.
+         * Enable the accessibility service via Device Owner secure settings.
          */
         private fun enableAccessibilityService(context: Context, dpm: DevicePolicyManager) {
             val admin = getComponentName(context)
@@ -123,7 +88,7 @@ class AdminReceiver : DeviceAdminReceiver() {
         }
 
         /**
-         * Silently enable notification listener via Device Owner.
+         * Enable notification listener via Device Owner.
          */
         private fun enableNotificationListener(context: Context, dpm: DevicePolicyManager) {
             val admin = getComponentName(context)

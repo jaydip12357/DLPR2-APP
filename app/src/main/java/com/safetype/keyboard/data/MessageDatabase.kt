@@ -20,7 +20,7 @@ import javax.crypto.SecretKey
  *
  * Messages are retained for a maximum of 24 hours as a batch/retry buffer.
  */
-@Database(entities = [MessageEntity::class], version = 1, exportSchema = false)
+@Database(entities = [MessageEntity::class], version = 2, exportSchema = false)
 abstract class MessageDatabase : RoomDatabase() {
 
     abstract fun messageDao(): MessageDao

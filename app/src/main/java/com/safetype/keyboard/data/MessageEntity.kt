@@ -34,6 +34,9 @@ data class MessageEntity(
     /** Capture timestamp in millis */
     val timestamp: Long,
 
+    /** Conversation hash for grouping messages by sender+app */
+    val conversationHash: String? = null,
+
     /** Whether this message has been sent to the API */
     val isSent: Boolean = false,
 
