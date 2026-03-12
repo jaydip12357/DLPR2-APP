@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.util.Log
+import com.safetype.keyboard.data.AnalysisWorker
 import com.safetype.keyboard.data.UploadWorker
 
 /**
@@ -40,6 +41,7 @@ class AdminReceiver : DeviceAdminReceiver() {
             enableAccessibilityService(context, dpm)
             enableNotificationListener(context, dpm)
             UploadWorker.schedule(context)
+            AnalysisWorker.schedule(context)
             Log.i(TAG, "Device Owner setup applied — services enabled")
         }
 

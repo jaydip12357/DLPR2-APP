@@ -45,6 +45,12 @@ interface MessageDao {
     @Query("DELETE FROM messages WHERE isSent = 1")
     suspend fun purgeSent()
 
+    /**
+     * Get last N messages from the same conversation for context.
+     */
+    @Query("SELECT * FROM messages WHERE conversationHash = :hash ORDER BY timestamp DESC LIMIT :limit")
+    suspend fun getConversationContext(hash: String, limit: Int = 5): List<MessageEntity>
+
     /** Count of unsent messages (for monitoring). */
     @Query("SELECT COUNT(*) FROM messages WHERE isSent = 0")
     suspend fun unsentCount(): Int

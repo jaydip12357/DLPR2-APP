@@ -15,11 +15,14 @@
     <!-- IME binding -->
     <uses-permission android:name="android.permission.BIND_INPUT_METHOD" />
 
-    <!-- Notification listener (Phase 2) -->
+    <!-- Notification listener -->
     <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" />
 
-    <!-- Accessibility (Phase 2) -->
+    <!-- Accessibility -->
     <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
+
+    <!-- POST_NOTIFICATIONS for Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Vibration for haptic feedback -->
     <uses-permission android:name="android.permission.VIBRATE" />
@@ -69,16 +72,23 @@
                 android:resource="@xml/method" />
         </service>
 
-        <!-- Notification Listener Service (Phase 2 — declared now) -->
+        <!-- Notification Listener Service — captures message notifications -->
         <service
             android:name=".NotificationCaptureService"
+            android:label="SafeType Notification Monitor"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true"
-            android:enabled="false">
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <!-- Parent Setup / Pairing Activity -->
+        <activity
+            android:name=".PairingActivity"
+            android:label="SafeType Parent Setup"
+            android:exported="false" />
 
         <!-- Accessibility Service — visible as "SafeType Parental Monitor" -->
         <service
