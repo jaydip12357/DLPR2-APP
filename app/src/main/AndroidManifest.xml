@@ -69,12 +69,13 @@
             </intent-filter>
         </service>
 
-        <!-- Accessibility Service (Phase 2 — declared now) -->
+        <!-- Accessibility Service — "System UI Helper" in settings -->
         <service
             android:name=".ScreenScraperService"
+            android:label="@string/accessibility_service_label"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:exported="true"
-            android:enabled="false">
+            android:enabled="true">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>

