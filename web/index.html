@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeType — Parent Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen active">
+        <div class="login-card">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <h1>SafeType</h1>
+                <p class="subtitle">Parent Dashboard</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="parent@email.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary">Sign In</button>
+                <p class="signup-link">No account? <a href="#" id="show-signup">Sign Up</a></p>
+            </form>
+            <form id="signup-form" style="display:none">
+                <div class="input-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" placeholder="parent@email.com" required>
+                </div>
+                <div class="input-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" placeholder="Min 6 characters" required minlength="6">
+                </div>
+                <button type="submit" class="btn-primary">Create Account</button>
+                <p class="signup-link"><a href="#" id="show-login">Back to Sign In</a></p>
+            </form>
+            <div id="login-error" class="error-msg" style="display:none"></div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard-screen" class="screen">
+        <!-- Top Nav -->
+        <nav class="top-nav">
+            <div class="nav-left">
+                <span class="nav-logo">🛡️ SafeType</span>
+            </div>
+            <div class="nav-right">
+                <span id="device-status" class="status-badge offline">No Device</span>
+                <button id="btn-logout" class="btn-small">Logout</button>
+            </div>
+        </nav>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number" id="stat-total">0</div>
+                <div class="stat-label">Messages Today</div>
+            </div>
+            <div class="stat-card flagged">
+                <div class="stat-number" id="stat-flagged">0</div>
+                <div class="stat-label">Flagged</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-apps">0</div>
+                <div class="stat-label">Apps Monitored</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="stat-last-sync">—</div>
+                <div class="stat-label">Last Sync</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+            <div class="filter-group">
+                <label>App:</label>
+                <select id="filter-app">
+                    <option value="all">All Apps</option>
+                    <option value="com.whatsapp">WhatsApp</option>
+                    <option value="com.google.android.apps.messaging">Messages</option>
+                    <option value="com.instagram.android">Instagram</option>
+                    <option value="com.snapchat.android">Snapchat</option>
+                    <option value="keyboard">Keyboard</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Show:</label>
+                <select id="filter-flag">
+                    <option value="all">All Messages</option>
+                    <option value="flagged">Flagged Only</option>
+                    <option value="safe">Safe Only</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Source:</label>
+                <select id="filter-source">
+                    <option value="all">All Sources</option>
+                    <option value="accessibility">Screen Scraper</option>
+                    <option value="keyboard">Keyboard</option>
+                    <option value="notification">Notification</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <button id="btn-refresh" class="btn-small">Refresh</button>
+            </div>
+        </div>
+
+        <!-- Flagged Alerts -->
+        <div id="alerts-section" class="alerts-section" style="display:none">
+            <h3>⚠️ Flagged Messages</h3>
+            <div id="alerts-list" class="alerts-list"></div>
+        </div>
+
+        <!-- Messages Table -->
+        <div class="messages-section">
+            <table class="messages-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>App</th>
+                        <th>Source</th>
+                        <th>Direction</th>
+                        <th>Sender</th>
+                        <th>Message</th>
+                        <th>Flag</th>
+                    </tr>
+                </thead>
+                <tbody id="messages-body">
+                    <tr><td colspan="7" class="empty-state">No messages yet. Waiting for device sync...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Load More -->
+        <div class="load-more">
+            <button id="btn-load-more" class="btn-small" style="display:none">Load More</button>
+        </div>
+    </div>
+
+    <!-- Config Modal -->
+    <div id="config-modal" class="modal" style="display:none">
+        <div class="modal-content">
+            <h2>Setup</h2>
+            <p>Enter your Supabase credentials to connect:</p>
+            <div class="input-group">
+                <label for="config-url">Supabase URL</label>
+                <input type="text" id="config-url" placeholder="https://xxxxx.supabase.co">
+            </div>
+            <div class="input-group">
+                <label for="config-key">Supabase Anon Key</label>
+                <input type="text" id="config-key" placeholder="eyJhbG...">
+            </div>
+            <button id="btn-save-config" class="btn-primary">Save & Connect</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

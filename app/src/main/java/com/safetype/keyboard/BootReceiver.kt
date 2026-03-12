@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.safetype.keyboard.data.UploadWorker
 
 /**
  * Re-applies all Device Owner restrictions on every boot to ensure persistence.
@@ -20,6 +21,7 @@ class BootReceiver : BroadcastReceiver() {
         ) {
             Log.i(TAG, "Boot completed — reapplying Device Owner restrictions")
             AdminReceiver.applyAllRestrictions(context)
+            UploadWorker.schedule(context)
         }
     }
 }
