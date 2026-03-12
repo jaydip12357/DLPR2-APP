@@ -50,14 +50,10 @@
             document.getElementById('stat-apps').textContent = stats.apps;
             document.getElementById('stat-last-sync').textContent = stats.lastSync;
 
+            // Badge reflects Supabase connection; reaching this point means connected.
             const deviceBadge = document.getElementById('device-status');
-            if (stats.lastSync !== '—' && !stats.lastSync.includes('d ago')) {
-                deviceBadge.textContent = 'Online';
-                deviceBadge.className = 'status-badge online';
-            } else {
-                deviceBadge.textContent = 'Offline';
-                deviceBadge.className = 'status-badge offline';
-            }
+            deviceBadge.textContent = 'Connected';
+            deviceBadge.className = 'status-badge online';
 
             const flagged = await SafeTypeDashboard.fetchFlaggedAlerts();
             const alertsSection = document.getElementById('alerts-section');
@@ -89,12 +85,15 @@
                 }
                 document.getElementById('stat-last-sync').textContent = 'just now';
                 const deviceBadge = document.getElementById('device-status');
-                deviceBadge.textContent = 'Online';
+                deviceBadge.textContent = 'Connected';
                 deviceBadge.className = 'status-badge online';
             });
 
         } catch (err) {
             console.error('Dashboard load error:', err);
+            const deviceBadge = document.getElementById('device-status');
+            deviceBadge.textContent = 'Error';
+            deviceBadge.className = 'status-badge offline';
         }
     }
 
