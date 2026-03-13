@@ -10,28 +10,22 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.safetype.keyboard.api.AnalyzeRequest
-import com.safetype.keyboard.api.ApiClient
-import com.safetype.keyboard.api.ContextMessage
-import com.safetype.keyboard.api.MessagePayload
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns
 import kotlinx.serialization.Serializable
 import java.util.concurrent.TimeUnit
 
 /**
- * WorkManager periodic worker for message analysis.
+ * WorkManager periodic worker for message upload.
  *
  * Runs every 15 minutes (WorkManager minimum). On each run:
  * 1. Reads unsent batch from Room (max 10)
  * 2. Uploads to Supabase (primary data store)
- * 3. Optionally calls analysis API for content flagging
- * 4. Marks as sent, purges old messages
+ * 3. Marks as sent, purges old messages
  *
- * Note: WorkManager minimum interval is 15 minutes. For testing, you can
- * use OneTimeWorkRequest to trigger immediately.
+ * Threat analysis is handled server-side by the Supabase Edge Function
+ * "analyze-messages" which calls OpenAI to classify and flag content.
  */
 class AnalysisWorker(
     appContext: Context,
@@ -51,7 +45,7 @@ class AnalysisWorker(
         }
 
         /**
-         * Schedule periodic analysis work.
+         * Schedule periodic upload work.
          */
         fun schedule(context: Context) {
             val constraints = Constraints.Builder()
@@ -85,13 +79,7 @@ class AnalysisWorker(
                 val batch = dao.getUnsentBatch(BATCH_SIZE)
                 if (batch.isEmpty()) break
 
-                // Step 1: Upload to Supabase
                 val supabaseOk = uploadToSupabase(batch)
-
-                // Step 2: Try analysis API if JWT token is available
-                if (ApiClient.hasToken(applicationContext)) {
-                    tryAnalysisApi(batch)
-                }
 
                 if (supabaseOk) {
                     val ids = batch.map { it.id }
@@ -136,52 +124,6 @@ class AnalysisWorker(
         } catch (e: Exception) {
             Log.e(TAG, "Supabase upload failed: ${e.message}")
             false
-        }
-    }
-
-    /**
-     * Call the analysis API for content flagging.
-     * This is optional — works without it, flags get added when API is available.
-     */
-    private suspend fun tryAnalysisApi(messages: List<MessageEntity>) {
-        try {
-            val api = ApiClient.getInstance(applicationContext)
-            val payloads = messages.map { msg ->
-                MessagePayload(
-                    id = msg.id,
-                    appSource = msg.appSource,
-                    sender = msg.sender,
-                    text = msg.text,
-                    direction = msg.direction,
-                    conversationHash = null,
-                    timestamp = msg.timestamp,
-                    context = null // Context fetching can be added later
-                )
-            }
-
-            val request = AnalyzeRequest(
-                deviceId = getDeviceId(),
-                messages = payloads
-            )
-
-            val response = api.analyzeMessages(request)
-            if (response.isSuccessful) {
-                val flagged = response.body()?.flagged
-                if (flagged != null && flagged.isNotEmpty()) {
-                    Log.i(TAG, "Analysis flagged ${flagged.size} messages")
-                    // Update Supabase with flag info
-                    for (flag in flagged) {
-                        try {
-                            supabase.from("messages").update(
-                                { set("is_flagged", true); set("flag_reason", flag.reason) }
-                            ) { filter { eq("id", flag.id) } }
-                        } catch (_: Exception) { }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Analysis API unavailable: ${e.message}")
-            // Non-fatal — messages still uploaded to Supabase
         }
     }
 

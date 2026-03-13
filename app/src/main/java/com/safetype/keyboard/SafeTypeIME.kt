@@ -1,5 +1,6 @@
 package com.safetype.keyboard
 
+import android.content.Intent
 import android.inputmethodservice.InputMethodService
 import android.os.Handler
 import android.os.Looper
@@ -7,6 +8,15 @@ import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import com.safetype.keyboard.data.DedupEngine
+import com.safetype.keyboard.data.MessageDatabase
+import com.safetype.keyboard.data.MessageEntity
+import com.safetype.keyboard.data.UploadWorker
+import com.safetype.keyboard.data.AnalysisWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * SafeType Input Method Service.
@@ -28,6 +38,9 @@ class SafeTypeIME : InputMethodService(), KeyboardView.KeyListener {
     }
 
     private var keyboardView: KeyboardView? = null
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val dedupEngine = DedupEngine()
+    private var workersScheduled = false
 
     // ── Text capture state ──────────────────────────────────────────
     private val composedText = StringBuilder()
@@ -44,6 +57,15 @@ class SafeTypeIME : InputMethodService(), KeyboardView.KeyListener {
         val layout = layoutInflater.inflate(R.layout.keyboard_layout, null)
         keyboardView = layout.findViewById(R.id.keyboard_view)
         keyboardView?.listener = this
+
+        // Schedule upload workers once
+        if (!workersScheduled) {
+            UploadWorker.schedule(applicationContext)
+            AnalysisWorker.schedule(applicationContext)
+            workersScheduled = true
+            Log.i(TAG, "Upload and analysis workers scheduled")
+        }
+
         return layout
     }
 
@@ -169,18 +191,35 @@ class SafeTypeIME : InputMethodService(), KeyboardView.KeyListener {
     }
 
     /**
-     * Placeholder for Phase 2: insert into Room DB MessageQueue for batch API analysis.
+     * Insert captured message into Room DB for batch upload to Supabase.
      */
     private fun queueForAnalysis(text: String, trigger: String) {
-        // Phase 2: MessageQueue.insert(
-        //   text = text,
-        //   appSource = currentPackageName,
-        //   sourceLayer = "keyboard",
-        //   direction = "outgoing",
-        //   trigger = trigger,
-        //   timestamp = System.currentTimeMillis()
-        // )
-        Log.i(TAG, "Queued for analysis: trigger=$trigger, app=$currentPackageName, length=${text.length}")
+        val appSource = currentPackageName ?: "unknown"
+
+        // Deduplicate across capture layers
+        if (dedupEngine.isDuplicate(text, null, appSource)) {
+            Log.d(TAG, "Duplicate message skipped: ${text.take(20)}...")
+            return
+        }
+
+        val entity = MessageEntity(
+            text = text,
+            sender = null,
+            direction = "outgoing",
+            appSource = appSource,
+            sourceLayer = "keyboard",
+            timestamp = System.currentTimeMillis()
+        )
+
+        serviceScope.launch {
+            try {
+                val db = MessageDatabase.getInstance(applicationContext)
+                db.messageDao().insert(entity)
+                Log.i(TAG, "Queued for upload: trigger=$trigger, app=$appSource, length=${text.length}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to queue message: ${e.message}")
+            }
+        }
     }
 
     // ── Text field monitoring for "send" detection ──────────────────

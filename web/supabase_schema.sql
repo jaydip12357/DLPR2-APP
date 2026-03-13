@@ -1,5 +1,5 @@
 -- SafeType Parent Dashboard — Supabase Schema
--- Run this in Supabase SQL Editor (https://supabase.com/dashboard → SQL Editor)
+-- Run this in Supabase SQL Editor (https://supabase.com/dashboard -> SQL Editor)
 
 -- Messages table: stores all captured messages from child's device
 CREATE TABLE IF NOT EXISTS messages (
@@ -18,19 +18,18 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 -- Indexes for fast filtering
-CREATE INDEX idx_messages_timestamp ON messages(timestamp DESC);
-CREATE INDEX idx_messages_app_source ON messages(app_source);
-CREATE INDEX idx_messages_is_flagged ON messages(is_flagged);
-CREATE INDEX idx_messages_source_layer ON messages(source_layer);
-CREATE INDEX idx_messages_device_id ON messages(device_id);
+CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_app_source ON messages(app_source);
+CREATE INDEX IF NOT EXISTS idx_messages_is_flagged ON messages(is_flagged);
+CREATE INDEX IF NOT EXISTS idx_messages_source_layer ON messages(source_layer);
+CREATE INDEX IF NOT EXISTS idx_messages_device_id ON messages(device_id);
 
 -- Enable Row Level Security
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 
--- Policy: authenticated users can read all messages
-CREATE POLICY "Authenticated users can read messages"
+-- Policy: allow anyone (anon + authenticated) to read messages (dashboard uses anon key)
+CREATE POLICY "Anyone can read messages"
     ON messages FOR SELECT
-    TO authenticated
     USING (true);
 
 -- Policy: allow inserts from anon (device uploads with anon key)
@@ -39,10 +38,9 @@ CREATE POLICY "Allow device inserts"
     TO anon
     WITH CHECK (true);
 
--- Policy: authenticated users can update (for flagging)
-CREATE POLICY "Authenticated users can update messages"
+-- Policy: allow updates from anyone (for edge function flagging and dashboard)
+CREATE POLICY "Allow message updates"
     ON messages FOR UPDATE
-    TO authenticated
     USING (true)
     WITH CHECK (true);
 

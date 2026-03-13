@@ -121,6 +121,43 @@ const SafeTypeDashboard = {
         }
     },
 
+    /**
+     * Call the analyze-messages Edge Function to flag unanalyzed messages.
+     * Returns { analyzed, flagged } counts.
+     */
+    async analyzeMessages() {
+        const { data, error } = await this.client.functions.invoke(
+            'analyze-messages',
+            { body: {} }
+        );
+
+        if (error) throw error;
+        return data;
+    },
+
+    /**
+     * Start auto-analysis interval (every 60 seconds).
+     */
+    startAutoAnalysis(onComplete) {
+        // Run once immediately
+        this.analyzeMessages()
+            .then(onComplete)
+            .catch(err => console.warn('Auto-analysis:', err.message));
+
+        this._analysisInterval = setInterval(() => {
+            this.analyzeMessages()
+                .then(onComplete)
+                .catch(err => console.warn('Auto-analysis:', err.message));
+        }, 60000);
+    },
+
+    stopAutoAnalysis() {
+        if (this._analysisInterval) {
+            clearInterval(this._analysisInterval);
+            this._analysisInterval = null;
+        }
+    },
+
     // ─── Rendering helpers ───
 
     renderAppBadge(appSource) {

@@ -7,5 +7,13 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const SafeTypeConfig = {
     getSupabaseClient() {
         return supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    },
+
+    getSupabaseUrl() {
+        return SUPABASE_URL;
+    },
+
+    getAnonKey() {
+        return SUPABASE_ANON_KEY;
     }
 };

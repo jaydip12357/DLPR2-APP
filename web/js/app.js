@@ -2,7 +2,7 @@
  * Main app controller.
  */
 (function () {
-    // ─── DOM refs ───
+    // --- DOM refs ---
     const loginScreen = document.getElementById('login-screen');
     const dashboardScreen = document.getElementById('dashboard-screen');
     const loginForm = document.getElementById('login-form');
@@ -10,7 +10,7 @@
 
     const client = SafeTypeConfig.getSupabaseClient();
 
-    // ─── Boot ───
+    // --- Boot ---
     async function boot() {
         SafeTypeAuth.init();
         SafeTypeDashboard.init(client);
@@ -23,10 +23,11 @@
         }
     }
 
-    // ─── Screens ───
+    // --- Screens ---
     function showLogin() {
         loginScreen.classList.add('active');
         dashboardScreen.classList.remove('active');
+        SafeTypeDashboard.stopAutoAnalysis();
     }
 
     function showDashboard() {
@@ -41,7 +42,42 @@
         setTimeout(() => { loginError.style.display = 'none'; }, 5000);
     }
 
-    // ─── Dashboard loading ───
+    // --- Analysis UI ---
+    function showAnalyzeStatus(text, isError) {
+        const el = document.getElementById('analyze-status');
+        el.textContent = text;
+        el.className = 'analyze-status' + (isError ? ' error' : ' success');
+        setTimeout(() => { el.textContent = ''; }, 4000);
+    }
+
+    async function runAnalysis() {
+        const btn = document.getElementById('btn-analyze');
+        btn.disabled = true;
+        btn.textContent = 'Analyzing...';
+        try {
+            const result = await SafeTypeDashboard.analyzeMessages();
+            if (result && result.analyzed !== undefined) {
+                showAnalyzeStatus(
+                    'Analyzed ' + result.analyzed + ', flagged ' + result.flagged,
+                    false
+                );
+                // Refresh dashboard to show updated flags
+                if (result.flagged > 0) {
+                    await loadDashboard();
+                }
+            } else {
+                showAnalyzeStatus('Analysis complete', false);
+            }
+        } catch (err) {
+            console.error('Analysis error:', err);
+            showAnalyzeStatus('Analysis failed: ' + (err.message || 'unknown error'), true);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Analyze Now';
+        }
+    }
+
+    // --- Dashboard loading ---
     async function loadDashboard() {
         try {
             const stats = await SafeTypeDashboard.fetchStats();
@@ -51,7 +87,7 @@
             document.getElementById('stat-last-sync').textContent = stats.lastSync;
 
             const deviceBadge = document.getElementById('device-status');
-            if (stats.lastSync !== '—' && !stats.lastSync.includes('d ago')) {
+            if (stats.lastSync !== '---' && !stats.lastSync.includes('d ago')) {
                 deviceBadge.textContent = 'Online';
                 deviceBadge.className = 'status-badge online';
             } else {
@@ -88,9 +124,16 @@
                     flagEl.textContent = parseInt(flagEl.textContent) + 1;
                 }
                 document.getElementById('stat-last-sync').textContent = 'just now';
-                const deviceBadge = document.getElementById('device-status');
-                deviceBadge.textContent = 'Online';
-                deviceBadge.className = 'status-badge online';
+                const db = document.getElementById('device-status');
+                db.textContent = 'Online';
+                db.className = 'status-badge online';
+            });
+
+            // Start auto-analysis (every 60s)
+            SafeTypeDashboard.startAutoAnalysis(async (result) => {
+                if (result && result.flagged > 0) {
+                    await loadDashboard();
+                }
             });
 
         } catch (err) {
@@ -98,7 +141,7 @@
         }
     }
 
-    async function loadMessages(append = false) {
+    async function loadMessages(append) {
         const filters = {
             app: document.getElementById('filter-app').value,
             flag: document.getElementById('filter-flag').value,
@@ -126,7 +169,7 @@
         loadMoreBtn.style.display = messages.length >= SafeTypeDashboard.pageSize ? 'inline-block' : 'none';
     }
 
-    // ─── Event listeners ───
+    // --- Event listeners ---
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -143,6 +186,7 @@
 
     document.getElementById('btn-logout').addEventListener('click', async () => {
         SafeTypeDashboard.unsubscribeRealtime();
+        SafeTypeDashboard.stopAutoAnalysis();
         await SafeTypeAuth.signOut();
         showLogin();
     });
@@ -152,8 +196,9 @@
     });
 
     document.getElementById('btn-refresh').addEventListener('click', () => loadDashboard());
+    document.getElementById('btn-analyze').addEventListener('click', () => runAnalysis());
     document.getElementById('btn-load-more').addEventListener('click', () => loadMessages(true));
 
-    // ─── Start ───
+    // --- Start ---
     boot();
 })();
