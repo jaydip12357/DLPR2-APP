@@ -81,13 +81,7 @@ li { margin-bottom: 6px; }
 .hero h1 { font-size: 44px; font-weight: 700; line-height: 1.15; color: var(--white); letter-spacing: -1px; margin-bottom: 20px; }
 .hero-sub { font-size: 17px; line-height: 1.7; color: var(--text-sec); margin-bottom: 36px; max-width: 540px; }
 .hero-actions { display: flex; gap: 12px; }
-
-/* ── Features ───────────────────────────────────────── */
-.features { padding: 80px 0; border-top: 1px solid var(--border); }
-.features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; }
-.feature-num { font-size: 12px; font-weight: 600; color: var(--accent); letter-spacing: 1px; margin-bottom: 12px; }
-.feature h3 { font-size: 18px; font-weight: 600; color: var(--white); margin-bottom: 10px; }
-.feature p { font-size: 14px; color: var(--text-sec); line-height: 1.7; }
+.hero-proof { font-size: 13px; color: var(--text-mute); margin-top: 20px; }
 
 /* ── How it works ───────────────────────────────────── */
 .how-it-works { padding: 64px 0; border-top: 1px solid var(--border); }
@@ -97,6 +91,45 @@ li { margin-bottom: 6px; }
 .step-n { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--border-lt); border-radius: 50%; font-size: 13px; font-weight: 600; color: var(--accent-h); margin-bottom: 10px; }
 .step p { font-size: 14px; color: var(--text-sec); line-height: 1.6; }
 .step-arrow { color: var(--text-mute); font-size: 20px; padding-top: 2px; }
+
+/* ── Why SafeType (benefits) ─────────────────────────── */
+.why-safetype { padding: 64px 0; border-top: 1px solid var(--border); }
+.why-safetype h2 { font-size: 24px; font-weight: 600; color: var(--white); margin-bottom: 36px; }
+.benefits-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+.benefit-card { padding: 20px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); }
+.benefit-card h3 { font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+.benefit-card p { font-size: 14px; color: var(--text-sec); line-height: 1.7; margin: 0; }
+
+/* ── Safety & transparency ───────────────────────────── */
+.safety-transparency { padding: 64px 0; border-top: 1px solid var(--border); }
+.safety-transparency h2 { font-size: 24px; font-weight: 600; color: var(--white); margin-bottom: 12px; }
+.safety-lead { font-size: 16px; color: var(--text-sec); margin-bottom: 20px; max-width: 640px; }
+.safety-list { list-style: none; padding-left: 0; max-width: 640px; }
+.safety-list li { margin-bottom: 14px; font-size: 14px; color: var(--text-sec); line-height: 1.7; padding-left: 0; }
+
+/* ── Duke research & model roadmap ──────────────────── */
+.duke-research { padding: 64px 0; border-top: 1px solid var(--border); }
+.duke-research h2 { font-size: 24px; font-weight: 600; color: var(--white); margin-bottom: 16px; }
+.duke-lead { font-size: 16px; color: var(--text-sec); line-height: 1.7; margin-bottom: 28px; max-width: 720px; }
+.model-roadmap { display: flex; flex-direction: column; gap: 20px; max-width: 640px; }
+.roadmap-item { padding: 16px 20px; background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; }
+.roadmap-label { display: inline-block; font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.roadmap-item p { font-size: 14px; color: var(--text-sec); line-height: 1.7; margin: 0; }
+
+/* ── CTA strip ───────────────────────────────────────── */
+.cta-strip { padding: 56px 0; border-top: 1px solid var(--border); }
+.cta-strip h2 { font-size: 22px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+.cta-strip-sub { font-size: 15px; color: var(--text-sec); margin-bottom: 24px; }
+.cta-strip-actions { display: flex; gap: 12px; }
+
+/* ── FAQ ─────────────────────────────────────────────── */
+.faq-section { padding: 48px 0 64px; border-top: 1px solid var(--border); }
+.faq-section h2 { font-size: 24px; font-weight: 600; color: var(--white); margin-bottom: 24px; }
+.faq-list { margin: 0; }
+.faq-list dt { font-size: 15px; font-weight: 600; color: var(--white); margin-top: 20px; margin-bottom: 6px; }
+.faq-list dt:first-child { margin-top: 0; }
+.faq-list dd { font-size: 14px; color: var(--text-sec); line-height: 1.7; margin: 0 0 0 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.faq-list dd:last-child { padding-bottom: 0; border-bottom: none; }
 
 /* ── Footer ─────────────────────────────────────────── */
 .landing-footer { padding: 32px 0; border-top: 1px solid var(--border); }
@@ -232,7 +265,8 @@ li { margin-bottom: 6px; }
     .hero { padding: 60px 0 48px; }
     .hero h1 { font-size: 30px; }
     .hero-sub { font-size: 15px; }
-    .features-grid { grid-template-columns: 1fr; gap: 32px; }
+    .benefits-grid { grid-template-columns: 1fr; gap: 16px; }
+    .why-safetype, .safety-transparency, .duke-research, .cta-strip { padding: 48px 0; }
     .steps-row { flex-direction: column; }
     .step-arrow { display: none; }
     .stats-strip { flex-wrap: wrap; gap: 16px; padding: 16px 24px; }
@@ -244,10 +278,13 @@ li { margin-bottom: 6px; }
     .setup-step { flex-direction: column; gap: 12px; }
     .landing-nav { gap: 16px; }
     .hero-actions { flex-direction: column; }
+    .cta-strip-actions { flex-direction: column; }
 }
 
 @media (max-width: 480px) {
     .hero h1 { font-size: 26px; }
     .stat-val { font-size: 22px; }
     .landing-header .container { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .why-safetype h2, .safety-transparency h2, .duke-research h2, .faq-section h2 { font-size: 20px; }
+    .faq-section { padding: 32px 0 48px; }
 }
