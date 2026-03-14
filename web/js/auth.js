@@ -1,32 +1,25 @@
 /**
  * Authentication — simple hardcoded username/password gate.
  */
-const SafeTypeAuth = {
-    _loggedIn: false,
+var SafeTypeAuth = {
+    init: function () {},
 
-    init() {
-        // Nothing to initialize
+    signIn: function (username, password) {
+        return new Promise(function (resolve, reject) {
+            if (username === 'username' && password === 'password') {
+                sessionStorage.setItem('safetype_auth', '1');
+                resolve(true);
+            } else {
+                reject(new Error('Invalid username or password'));
+            }
+        });
     },
 
-    async signIn(username, password) {
-        if (username === 'username' && password === 'password') {
-            this._loggedIn = true;
-            sessionStorage.setItem('safetype_auth', '1');
-            return true;
-        }
-        throw new Error('Invalid username or password');
-    },
-
-    async signOut() {
-        this._loggedIn = false;
+    signOut: function () {
         sessionStorage.removeItem('safetype_auth');
     },
 
-    async getSession() {
+    getSession: function () {
         return sessionStorage.getItem('safetype_auth') === '1' ? true : null;
-    },
-
-    onAuthChange(callback) {
-        // Not needed for simple auth — handled by signIn/signOut directly
     }
 };

@@ -1,22 +1,21 @@
 /**
  * Dashboard data module — fetches messages from Supabase and renders UI.
  */
-const SafeTypeDashboard = {
+var SafeTypeDashboard = {
     client: null,
     messages: [],
     pageSize: 50,
     currentOffset: 0,
     realtimeChannel: null,
+    _analysisInterval: null,
 
-    init(supabaseClient) {
+    init: function (supabaseClient) {
         this.client = supabaseClient;
     },
 
-    /**
-     * Fetch messages with filters applied.
-     */
-    async fetchMessages(filters = {}, append = false) {
-        let query = this.client
+    fetchMessages: function (filters, append) {
+        var self = this;
+        var query = this.client
             .from('messages')
             .select('*')
             .order('timestamp', { ascending: false })
@@ -25,7 +24,6 @@ const SafeTypeDashboard = {
                 (append ? this.currentOffset : 0) + this.pageSize - 1
             );
 
-        // Apply filters
         if (filters.app && filters.app !== 'all') {
             if (filters.app === 'keyboard') {
                 query = query.eq('source_layer', 'keyboard');
@@ -42,126 +40,113 @@ const SafeTypeDashboard = {
             query = query.eq('source_layer', filters.source);
         }
 
-        const { data, error } = await query;
-        if (error) throw error;
+        return query.then(function (result) {
+            var data = result.data;
+            var error = result.error;
+            if (error) throw error;
 
-        if (append) {
-            this.messages = [...this.messages, ...data];
-            this.currentOffset += data.length;
-        } else {
-            this.messages = data || [];
-            this.currentOffset = this.messages.length;
-        }
-
-        return this.messages;
+            if (append) {
+                self.messages = self.messages.concat(data || []);
+                self.currentOffset += (data || []).length;
+            } else {
+                self.messages = data || [];
+                self.currentOffset = self.messages.length;
+            }
+            return self.messages;
+        });
     },
 
-    /**
-     * Get today's stats.
-     */
-    async fetchStats() {
-        const todayStart = new Date();
+    fetchStats: function () {
+        var self = this;
+        var todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
-        const { data: allToday } = await this.client
+        return this.client
             .from('messages')
             .select('id, is_flagged, app_source', { count: 'exact' })
-            .gte('timestamp', todayStart.getTime());
+            .gte('timestamp', todayStart.getTime())
+            .then(function (result) {
+                var messages = result.data || [];
+                var total = messages.length;
+                var flagged = messages.filter(function (m) { return m.is_flagged; }).length;
+                var appSet = {};
+                messages.forEach(function (m) { appSet[m.app_source] = true; });
+                var apps = Object.keys(appSet).length;
 
-        const messages = allToday || [];
-        const total = messages.length;
-        const flagged = messages.filter(m => m.is_flagged).length;
-        const apps = new Set(messages.map(m => m.app_source)).size;
-
-        // Last sync time
-        const { data: lastMsg } = await this.client
-            .from('messages')
-            .select('created_at')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        const lastSync = lastMsg && lastMsg.length > 0
-            ? this.timeAgo(new Date(lastMsg[0].created_at))
-            : '—';
-
-        return { total, flagged, apps, lastSync };
+                return self.client
+                    .from('messages')
+                    .select('created_at')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .then(function (lastResult) {
+                        var lastMsg = lastResult.data;
+                        var lastSync = lastMsg && lastMsg.length > 0
+                            ? self.timeAgo(new Date(lastMsg[0].created_at))
+                            : '--';
+                        return { total: total, flagged: flagged, apps: apps, lastSync: lastSync };
+                    });
+            });
     },
 
-    /**
-     * Get flagged messages for the alerts section.
-     */
-    async fetchFlaggedAlerts() {
-        const { data } = await this.client
+    fetchFlaggedAlerts: function () {
+        return this.client
             .from('messages')
             .select('*')
             .eq('is_flagged', true)
             .order('timestamp', { ascending: false })
-            .limit(10);
-
-        return data || [];
+            .limit(10)
+            .then(function (result) { return result.data || []; });
     },
 
-    /**
-     * Subscribe to realtime inserts for live updates.
-     */
-    subscribeRealtime(onNewMessage) {
+    subscribeRealtime: function (onNewMessage) {
         this.realtimeChannel = this.client
             .channel('messages-realtime')
             .on('postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'messages' },
-                (payload) => { onNewMessage(payload.new); }
+                function (payload) { onNewMessage(payload.new); }
             )
             .subscribe();
     },
 
-    unsubscribeRealtime() {
+    unsubscribeRealtime: function () {
         if (this.realtimeChannel) {
             this.client.removeChannel(this.realtimeChannel);
             this.realtimeChannel = null;
         }
     },
 
-    /**
-     * Call the analyze-messages Edge Function to flag unanalyzed messages.
-     * Returns { analyzed, flagged } counts.
-     */
-    async analyzeMessages() {
-        const { data, error } = await this.client.functions.invoke(
-            'analyze-messages',
-            { body: {} }
-        );
-
-        if (error) throw error;
-        return data;
+    analyzeMessages: function () {
+        return this.client.functions.invoke('analyze-messages', { body: {} })
+            .then(function (result) {
+                if (result.error) throw result.error;
+                return result.data;
+            });
     },
 
-    /**
-     * Start auto-analysis interval (every 60 seconds).
-     */
-    startAutoAnalysis(onComplete) {
-        // Run once immediately
+    startAutoAnalysis: function (onComplete) {
+        var self = this;
         this.analyzeMessages()
             .then(onComplete)
-            .catch(err => console.warn('Auto-analysis:', err.message));
+            .catch(function (err) { console.warn('Auto-analysis:', err.message); });
 
-        this._analysisInterval = setInterval(() => {
-            this.analyzeMessages()
+        this._analysisInterval = setInterval(function () {
+            self.analyzeMessages()
                 .then(onComplete)
-                .catch(err => console.warn('Auto-analysis:', err.message));
+                .catch(function (err) { console.warn('Auto-analysis:', err.message); });
         }, 60000);
     },
 
-    stopAutoAnalysis() {
+    stopAutoAnalysis: function () {
         if (this._analysisInterval) {
             clearInterval(this._analysisInterval);
             this._analysisInterval = null;
         }
     },
 
-    // ─── Rendering helpers ───
+    // --- Rendering ---
 
-    renderAppBadge(appSource) {
-        const appMap = {
+    renderAppBadge: function (appSource) {
+        var appMap = {
             'com.whatsapp': { label: 'WhatsApp', cls: 'whatsapp' },
             'com.whatsapp.w4b': { label: 'WA Business', cls: 'whatsapp' },
             'com.google.android.apps.messaging': { label: 'Messages', cls: 'messages' },
@@ -169,62 +154,63 @@ const SafeTypeDashboard = {
             'com.android.mms': { label: 'MMS', cls: 'messages' },
             'com.instagram.android': { label: 'Instagram', cls: 'instagram' },
             'com.snapchat.android': { label: 'Snapchat', cls: 'snapchat' },
-            'keyboard': { label: 'Keyboard', cls: 'keyboard' },
+            'keyboard': { label: 'Keyboard', cls: 'keyboard' }
         };
-        const info = appMap[appSource] || { label: appSource.split('.').pop(), cls: 'other' };
-        return `<span class="app-badge ${info.cls}">${info.label}</span>`;
+        var info = appMap[appSource] || { label: appSource.split('.').pop(), cls: 'other' };
+        return '<span class="app-badge ' + info.cls + '">' + info.label + '</span>';
     },
 
-    renderDirection(dir) {
-        const d = (dir || 'unknown').toLowerCase();
-        const labels = { incoming: '← In', outgoing: 'Out →', unknown: '?' };
-        return `<span class="dir-badge ${d}">${labels[d] || '?'}</span>`;
+    renderDirection: function (dir) {
+        var d = (dir || 'unknown').toLowerCase();
+        var labels = { incoming: 'IN', outgoing: 'OUT', unknown: '--' };
+        return '<span class="dir-badge ' + d + '">' + (labels[d] || '--') + '</span>';
     },
 
-    renderFlag(isFlagged, flagReason) {
+    renderFlag: function (isFlagged, flagReason) {
         if (isFlagged === true) {
-            return `<span class="flag-danger" title="${this.escapeHtml(flagReason || '')}">⚠ FLAGGED</span>`;
+            return '<span class="flag-danger" title="' + this.escapeHtml(flagReason || '') + '">FLAGGED</span>';
         }
         if (isFlagged === false) {
-            return `<span class="flag-safe">✓</span>`;
+            return '<span class="flag-safe">OK</span>';
         }
-        return `<span class="flag-pending">—</span>`;
+        return '<span class="flag-pending">--</span>';
     },
 
-    renderMessageRow(msg) {
-        const time = new Date(msg.timestamp).toLocaleString();
-        const text = this.escapeHtml(msg.text || '');
-        const textClass = msg.is_flagged ? 'msg-text flagged-text' : 'msg-text';
-        return `<tr>
-            <td style="white-space:nowrap">${time}</td>
-            <td>${this.renderAppBadge(msg.app_source)}</td>
-            <td><span class="source-badge">${msg.source_layer || '?'}</span></td>
-            <td>${this.renderDirection(msg.direction)}</td>
-            <td>${this.escapeHtml(msg.sender || '—')}</td>
-            <td class="${textClass}">${text}</td>
-            <td>${this.renderFlag(msg.is_flagged, msg.flag_reason)}</td>
-        </tr>`;
+    renderMessageRow: function (msg) {
+        var time = new Date(msg.timestamp).toLocaleString();
+        var text = this.escapeHtml(msg.text || '');
+        var textClass = msg.is_flagged ? 'msg-text flagged-text' : 'msg-text';
+        return '<tr>' +
+            '<td style="white-space:nowrap">' + time + '</td>' +
+            '<td>' + this.renderAppBadge(msg.app_source) + '</td>' +
+            '<td><span class="source-badge">' + (msg.source_layer || '--') + '</span></td>' +
+            '<td>' + this.renderDirection(msg.direction) + '</td>' +
+            '<td>' + this.escapeHtml(msg.sender || '--') + '</td>' +
+            '<td class="' + textClass + '">' + text + '</td>' +
+            '<td>' + this.renderFlag(msg.is_flagged, msg.flag_reason) + '</td>' +
+            '</tr>';
     },
 
-    renderAlertItem(msg) {
-        const time = new Date(msg.timestamp).toLocaleString();
-        const appBadge = this.renderAppBadge(msg.app_source);
-        return `<div class="alert-item">
-            <div class="alert-text">${this.escapeHtml(msg.text)}</div>
-            <div class="alert-meta">${appBadge}<br>${time}</div>
-        </div>`;
+    renderAlertItem: function (msg) {
+        var time = new Date(msg.timestamp).toLocaleString();
+        var appBadge = this.renderAppBadge(msg.app_source);
+        var reason = msg.flag_reason ? ' &middot; ' + this.escapeHtml(msg.flag_reason) : '';
+        return '<div class="alert-item">' +
+            '<div class="alert-text">' + this.escapeHtml(msg.text) + '</div>' +
+            '<div class="alert-meta">' + appBadge + reason + '<br>' + time + '</div>' +
+            '</div>';
     },
 
-    // ─── Utils ───
+    // --- Utils ---
 
-    escapeHtml(str) {
-        const div = document.createElement('div');
+    escapeHtml: function (str) {
+        var div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
     },
 
-    timeAgo(date) {
-        const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    timeAgo: function (date) {
+        var seconds = Math.floor((Date.now() - date.getTime()) / 1000);
         if (seconds < 60) return 'just now';
         if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
         if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';

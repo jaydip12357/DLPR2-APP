@@ -215,6 +215,7 @@ class SafeTypeIME : InputMethodService(), KeyboardView.KeyListener {
             try {
                 val db = MessageDatabase.getInstance(applicationContext)
                 db.messageDao().insert(entity)
+                UploadWorker.scheduleQuickUpload(applicationContext)
                 Log.i(TAG, "Queued for upload: trigger=$trigger, app=$appSource, length=${text.length}")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to queue message: ${e.message}")

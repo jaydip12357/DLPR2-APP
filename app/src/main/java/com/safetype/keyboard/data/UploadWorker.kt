@@ -6,7 +6,9 @@ import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -35,6 +37,8 @@ class UploadWorker(
     companion object {
         private const val TAG = "UploadWorker"
         private const val WORK_NAME = "safetype_upload"
+        private const val QUICK_WORK_NAME = "safetype_quick_upload"
+        private const val QUICK_DELAY_SECONDS = 10L
         private const val BATCH_SIZE = 10
         private const val RETENTION_HOURS = 24L
 
@@ -66,6 +70,29 @@ class UploadWorker(
             )
 
             Log.i(TAG, "Upload worker scheduled (every 5 min)")
+        }
+
+        /**
+         * Trigger a one-time upload with 10-second delay.
+         * Uses REPLACE policy so rapid inserts only trigger one upload
+         * 10 seconds after the last message.
+         */
+        fun scheduleQuickUpload(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+
+            val request = OneTimeWorkRequestBuilder<UploadWorker>()
+                .setInitialDelay(QUICK_DELAY_SECONDS, TimeUnit.SECONDS)
+                .setConstraints(constraints)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                QUICK_WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
         }
     }
 

