@@ -2,7 +2,7 @@
  * Main app controller with hash-based routing.
  */
 (function () {
-    var screens = ['landing', 'setup', 'login', 'dashboard'];
+    var screens = ['landing', 'setup', 'model', 'login', 'dashboard'];
     var client = SafeTypeConfig.getSupabaseClient();
 
     // --- Routing ---
@@ -220,6 +220,53 @@
     document.getElementById('btn-refresh').addEventListener('click', function () { loadDashboard(); });
     document.getElementById('btn-analyze').addEventListener('click', function () { runAnalysis(); });
     document.getElementById('btn-load-more').addEventListener('click', function () { loadMessages(true); });
+
+    // --- Settings panel ---
+    document.getElementById('btn-settings').addEventListener('click', function () {
+        var panel = document.getElementById('settings-panel');
+        var isVisible = panel.style.display !== 'none';
+        if (isVisible) {
+            panel.style.display = 'none';
+        } else {
+            panel.style.display = 'block';
+            // Load current settings
+            SafeTypeDashboard.getSettings().then(function (settings) {
+                var provider = settings['api_provider'] || 'openai';
+                var customUrl = settings['custom_model_url'] || 'https://dl-project-2-second-version.onrender.com';
+                document.getElementById('api-provider').value = provider;
+                document.getElementById('custom-api-url').value = customUrl;
+                document.getElementById('custom-url-field').style.display = provider === 'custom' ? 'block' : 'none';
+                document.getElementById('active-provider-label').textContent = provider === 'custom' ? 'Duke Custom Model' : 'OpenAI';
+            });
+        }
+    });
+
+    document.getElementById('btn-close-settings').addEventListener('click', function () {
+        document.getElementById('settings-panel').style.display = 'none';
+    });
+
+    document.getElementById('api-provider').addEventListener('change', function () {
+        var isCustom = this.value === 'custom';
+        document.getElementById('custom-url-field').style.display = isCustom ? 'block' : 'none';
+    });
+
+    document.getElementById('btn-save-settings').addEventListener('click', function () {
+        var provider = document.getElementById('api-provider').value;
+        var customUrl = document.getElementById('custom-api-url').value;
+        var statusEl = document.getElementById('settings-status');
+
+        SafeTypeDashboard.saveSettings(provider, customUrl)
+            .then(function () {
+                statusEl.textContent = 'Settings saved';
+                statusEl.className = 'settings-status success';
+                document.getElementById('active-provider-label').textContent = provider === 'custom' ? 'Duke Custom Model' : 'OpenAI';
+                setTimeout(function () { statusEl.textContent = ''; }, 3000);
+            })
+            .catch(function (err) {
+                statusEl.textContent = 'Failed to save: ' + (err.message || 'unknown error');
+                statusEl.className = 'settings-status error';
+            });
+    });
 
     boot();
 })();

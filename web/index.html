@@ -17,6 +17,7 @@
                 <a href="#landing" class="brand">SafeType</a>
                 <nav class="landing-nav">
                     <a href="#setup">Setup Guide</a>
+                    <a href="#model">Model &amp; research</a>
                     <a href="#login" class="nav-cta">Parent Login</a>
                 </nav>
             </div>
@@ -98,15 +99,15 @@
         <section class="duke-research">
             <div class="container">
                 <h2>Research at Duke University</h2>
-                <p class="duke-lead">SafeType is built as a <strong>Deep Learning project at Duke University</strong>. We are developing a custom model to detect harmful content in messaging and will integrate it alongside our current analysis pipeline.</p>
+                <p class="duke-lead">SafeType is built as a <strong>Deep Learning project at Duke University</strong>. We use our <strong>custom content-safety model</strong> to detect harmful content in messaging. The model is live at <a href="https://dl-project-2-second-version.onrender.com" target="_blank" rel="noopener">dl-project-2-second-version.onrender.com</a> and linked to this app. <a href="#model">Model &amp; research details</a>.</p>
                 <div class="model-roadmap">
                     <div class="roadmap-item">
-                        <span class="roadmap-label">Now</span>
-                        <p>Production message analysis uses the <strong>OpenAI API</strong> to classify and flag threats (bullying, sexual content, self-harm, violence, grooming, and more).</p>
+                        <span class="roadmap-label">Our model</span>
+                        <p>Our <strong>custom 10-class NLP model</strong> (Naive Baseline, Logistic Regression, and fine-tuned DistilBERT) classifies messages for racism, sexism, profanity, cyberbullying, toxicity, hate speech, threat, sarcasm, and more. Trained on 8 datasets (~375k samples, balanced to 50k). Served via the Duke project API.</p>
                     </div>
                     <div class="roadmap-item">
-                        <span class="roadmap-label">In progress</span>
-                        <p><strong>Custom Duke model API integration</strong> for project evaluation and tuning. Once validated, we will offer it as an option or replacement in the analysis pipeline.</p>
+                        <span class="roadmap-label">Live API</span>
+                        <p><a href="https://dl-project-2-second-version.onrender.com" target="_blank" rel="noopener">SafeType AI Keyboard Safety Monitor</a> — the model is deployed here and connected to the parent dashboard for real-time threat detection.</p>
                     </div>
                 </div>
             </div>
@@ -147,12 +148,149 @@
         </footer>
     </div>
 
+    <!-- ============ MODEL & RESEARCH ============ -->
+    <div id="model-screen" class="screen">
+        <header class="page-header">
+            <div class="container">
+                <a href="#landing" class="back-link">&larr; Back to home</a>
+                <a href="#login" class="nav-cta">Parent Login</a>
+            </div>
+        </header>
+
+        <section class="model-page-content">
+            <div class="container narrow">
+                <h1>Model &amp; research</h1>
+                <p class="model-page-lead">How SafeType detects harmful content and what we use today. Part of our Duke University Deep Learning project.</p>
+
+                <section class="model-block">
+                    <h2>Our custom model (production)</h2>
+                    <p>SafeType uses our <strong>custom content-safety model</strong> developed for the Duke Deep Learning project. It is deployed and live at:</p>
+                    <p><a href="https://dl-project-2-second-version.onrender.com" target="_blank" rel="noopener" class="btn btn-primary btn-sm">SafeType AI Keyboard Safety Monitor — Live API</a></p>
+                    <p>This app (parent dashboard and Android capture) is linked to that API. Messages are sent to the custom model for classification; results (label and confidence) are used to flag threats on the dashboard.</p>
+                    <ul class="model-spec-list">
+                        <li><strong>Live API:</strong> <a href="https://dl-project-2-second-version.onrender.com" target="_blank" rel="noopener">https://dl-project-2-second-version.onrender.com</a></li>
+                        <li><strong>Source repo:</strong> <a href="https://github.com/hanfuzhao/DL_Project_2-Second_version-" target="_blank" rel="noopener">DL_Project_2-Second_version-</a> (code, training, data)</li>
+                        <li><strong>Input:</strong> Message text (and optional batch).</li>
+                        <li><strong>Output:</strong> Predicted label (one of 10 classes), confidence, and top-3 class probabilities.</li>
+                    </ul>
+                </section>
+
+                <section class="model-block">
+                    <h2>Threat categories detected (10 classes)</h2>
+                    <p>Our custom model classifies messages into these <strong>10 categories</strong>:</p>
+                    <ul class="model-spec-list">
+                        <li><strong>clean</strong> — Safe, non-harmful content</li>
+                        <li><strong>racism</strong> — Racial hate or discrimination</li>
+                        <li><strong>sexism</strong> — Sexist or misogynistic content</li>
+                        <li><strong>profanity</strong> — Obscene or swear words</li>
+                        <li><strong>cyberbullying</strong> — Insults, personal attacks</li>
+                        <li><strong>toxicity</strong> — Generally toxic language</li>
+                        <li><strong>hate_speech</strong> — Generic hate speech</li>
+                        <li><strong>implicit_hate</strong> — Implicit or indirect hate</li>
+                        <li><strong>threat</strong> — Threats, aggression</li>
+                        <li><strong>sarcasm</strong> — Sarcastic or ironic (context-dependent)</li>
+                    </ul>
+                </section>
+
+                <section class="model-block">
+                    <h2>Duke Deep Learning project — custom model repo</h2>
+                    <p>The custom SafeType content-safety models are developed in a separate repository: <strong><a href="https://github.com/hanfuzhao/DL_Project_2-Second_version-" target="_blank" rel="noopener">DL_Project_2-Second_version-</a></strong>. It implements an NLP system that detects <strong>10 categories</strong> of harmful or sensitive content for children in online chat.</p>
+
+                    <h3>Models (10-way classification)</h3>
+                    <table class="model-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Model</th>
+                                <th>Artifacts</th>
+                                <th>Accuracy</th>
+                                <th>Weighted F1</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Naive baseline</td>
+                                <td>Keyword-matching + majority class</td>
+                                <td><code>naive_baseline.pkl</code></td>
+                                <td>~0.21</td>
+                                <td>~0.17</td>
+                            </tr>
+                            <tr>
+                                <td>Classical ML</td>
+                                <td>TF-IDF + Logistic Regression</td>
+                                <td><code>logistic_regression.pkl</code>, <code>tfidf_vectorizer.pkl</code></td>
+                                <td>~0.63</td>
+                                <td>~0.62</td>
+                            </tr>
+                            <tr>
+                                <td>Neural</td>
+                                <td>Fine-tuned DistilBERT</td>
+                                <td><code>distilbert-toxicity/</code></td>
+                                <td>~0.72</td>
+                                <td>~0.72</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Label taxonomy (10 classes)</h3>
+                    <p>clean, racism, sexism, profanity, cyberbullying, toxicity, hate_speech, implicit_hate, threat, sarcasm.</p>
+
+                    <h3>Training data (8 sources, balanced to 50k)</h3>
+                    <ul class="model-spec-list">
+                        <li><strong>Davidson et al.</strong> — 24,783 tweets (<code>labeled_data.csv</code>)</li>
+                        <li><strong>Jigsaw Toxic Comment v1</strong> — 159,571 comments (multi-label)</li>
+                        <li><strong>Jigsaw Unintended Bias v2</strong> — 100,000 sampled</li>
+                        <li><strong>UC Berkeley D-Lab Measuring Hate Speech</strong> — 39,565 comments (HuggingFace)</li>
+                        <li><strong>EDOS</strong> — Explainable Detection of Online Sexism, 20,000 posts (Gab &amp; Reddit)</li>
+                        <li><strong>HateXplain</strong> — 20,148 posts with target-community annotations</li>
+                        <li><strong>ImplicitHate</strong> — 6,346 implicit hate tweets (HuggingFace)</li>
+                        <li><strong>TweetEval irony</strong> — ~4,601 tweets for sarcasm/irony (HuggingFace)</li>
+                    </ul>
+                    <p>Combined ~375k samples → balanced to <strong>50,000</strong> (5,000 per class). Pipeline: <code>make_dataset.py</code> → <code>build_features.py</code> (TF-IDF, handcrafted features) → <code>model.py</code> (train all three) → <code>experiment.py</code> (training-size sensitivity, noise robustness). Inference: <code>main.py</code> (interactive / single / batch); <code>app.py</code> for API.</p>
+
+                    <p><a href="https://github.com/hanfuzhao/DL_Project_2-Second_version-" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Open Duke model repo (GitHub)</a> &nbsp; <a href="https://dl-project-2-second-version.onrender.com" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Live API (Render)</a></p>
+                </section>
+
+                <section class="model-block">
+                    <h2>Repository summary</h2>
+                    <table class="model-table">
+                        <thead>
+                            <tr>
+                                <th>Component</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Custom model (production)</td>
+                                <td>Deployed at <a href="https://dl-project-2-second-version.onrender.com" target="_blank" rel="noopener">dl-project-2-second-version.onrender.com</a>. Linked to this app for message classification.</td>
+                            </tr>
+                            <tr>
+                                <td>Model code &amp; training</td>
+                                <td><a href="https://github.com/hanfuzhao/DL_Project_2-Second_version-" target="_blank" rel="noopener">DL_Project_2-Second_version-</a> — 3 models (Naive Baseline, Logistic Regression, DistilBERT), 10-class, 8 data sources, 50k balanced dataset.</td>
+                            </tr>
+                            <tr>
+                                <td>This app (DLPR2-APP)</td>
+                                <td>Android capture, Supabase, parent dashboard. Calls the custom model API for threat detection.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <p class="model-page-back"><a href="#landing" class="btn btn-ghost">&larr; Back to home</a></p>
+            </div>
+        </section>
+    </div>
+
     <!-- ============ SETUP GUIDE ============ -->
     <div id="setup-screen" class="screen">
         <header class="page-header">
             <div class="container">
                 <a href="#landing" class="back-link">&larr; Back to home</a>
-                <a href="#login" class="nav-cta">Parent Login</a>
+                <nav class="page-header-nav">
+                    <a href="#model">Model &amp; research</a>
+                    <a href="#login" class="nav-cta">Parent Login</a>
+                </nav>
             </div>
         </header>
 
@@ -306,7 +444,43 @@
             <div class="control-actions">
                 <button id="btn-refresh" class="btn btn-sm btn-ghost">Refresh</button>
                 <button id="btn-analyze" class="btn btn-sm btn-primary">Analyze Now</button>
+                <button id="btn-settings" class="btn btn-sm btn-ghost">Settings</button>
                 <span id="analyze-status" class="analyze-status"></span>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="settings-panel" class="settings-panel" style="display:none">
+            <div class="settings-inner">
+                <div class="settings-header">
+                    <h3>Analysis Settings</h3>
+                    <button id="btn-close-settings" class="settings-close">&times;</button>
+                </div>
+                <div class="settings-body">
+                    <div class="field">
+                        <label for="api-provider">Analysis API</label>
+                        <select id="api-provider">
+                            <option value="openai">OpenAI (GPT-4o-mini) &mdash; default</option>
+                            <option value="custom">Duke Custom Model (Render)</option>
+                        </select>
+                    </div>
+                    <div id="custom-url-field" class="field" style="display:none">
+                        <label for="custom-api-url">Custom Model URL</label>
+                        <input type="url" id="custom-api-url" placeholder="https://dl-project-2-second-version.onrender.com" value="https://dl-project-2-second-version.onrender.com">
+                        <p class="field-hint">Your Render API endpoint. Must accept POST /api/predict with {"text": "..."}</p>
+                    </div>
+                    <div class="settings-info">
+                        <p><strong>OpenAI:</strong> Uses GPT-4o-mini via Supabase Edge Function. Best for nuanced context understanding.</p>
+                        <p><strong>Duke Custom Model:</strong> Fine-tuned DistilBERT (10-class). Classifies: clean, racism, sexism, profanity, cyberbullying, toxicity, hate_speech, implicit_hate, threat, sarcasm.</p>
+                    </div>
+                    <div class="settings-actions">
+                        <button id="btn-save-settings" class="btn btn-sm btn-primary">Save Settings</button>
+                        <span id="settings-status" class="settings-status"></span>
+                    </div>
+                    <div id="active-provider-badge" class="active-provider">
+                        Active: <span id="active-provider-label">OpenAI</span>
+                    </div>
+                </div>
             </div>
         </div>
 
