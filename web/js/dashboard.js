@@ -1,5 +1,6 @@
 /**
  * Dashboard data module — fetches messages from Supabase and renders UI.
+ * Analysis uses the Duke custom model API (Render).
  */
 var SafeTypeDashboard = {
     client: null,
@@ -8,6 +9,8 @@ var SafeTypeDashboard = {
     currentOffset: 0,
     realtimeChannel: null,
     _analysisInterval: null,
+
+    CUSTOM_MODEL_URL: 'https://dl-project-2-second-version.onrender.com',
 
     init: function (supabaseClient) {
         this.client = supabaseClient;
@@ -115,57 +118,40 @@ var SafeTypeDashboard = {
         }
     },
 
-    // ─── Settings (API provider) ───
+    // ─── Settings ───
 
-    getSettings: function () {
+    getModelUrl: function () {
+        var self = this;
         return this.client
             .from('settings')
-            .select('*')
+            .select('value')
+            .eq('key', 'custom_model_url')
+            .single()
             .then(function (result) {
-                var settings = {};
-                (result.data || []).forEach(function (row) {
-                    settings[row.key] = row.value;
-                });
-                return settings;
+                return (result.data && result.data.value) || self.CUSTOM_MODEL_URL;
+            })
+            .catch(function () {
+                return self.CUSTOM_MODEL_URL;
             });
     },
 
-    saveSettings: function (provider, customUrl) {
-        var self = this;
-        var rows = [
-            { key: 'api_provider', value: provider },
-            { key: 'custom_model_url', value: customUrl || '' }
-        ];
+    saveModelUrl: function (url) {
         return this.client
             .from('settings')
-            .upsert(rows, { onConflict: 'key' })
+            .upsert([{ key: 'custom_model_url', value: url || this.CUSTOM_MODEL_URL }], { onConflict: 'key' })
             .then(function (result) {
                 if (result.error) throw result.error;
                 return { status: 'ok' };
             });
     },
 
-    // ─── Analysis (supports both providers) ───
+    // ─── Analysis (Duke custom model via Render) ───
 
     analyzeMessages: function () {
         var self = this;
-        return this.getSettings().then(function (settings) {
-            var provider = settings['api_provider'] || 'openai';
-
-            if (provider === 'custom') {
-                return self._analyzeWithCustomModel(settings['custom_model_url'] || 'https://dl-project-2-second-version.onrender.com');
-            } else {
-                return self._analyzeWithOpenAI();
-            }
+        return this.getModelUrl().then(function (baseUrl) {
+            return self._analyzeWithCustomModel(baseUrl);
         });
-    },
-
-    _analyzeWithOpenAI: function () {
-        return this.client.functions.invoke('analyze-messages', { body: {} })
-            .then(function (result) {
-                if (result.error) throw result.error;
-                return result.data;
-            });
     },
 
     _analyzeWithCustomModel: function (baseUrl) {
@@ -197,10 +183,6 @@ var SafeTypeDashboard = {
                     .then(function (data) {
                         // Map custom model response to our flag format
                         var isFlagged = data.label !== 'clean';
-                        var severity = 'low';
-                        if (data.meta && data.meta.severity === 'danger') severity = 'high';
-                        else if (data.meta && data.meta.severity === 'warn') severity = 'medium';
-
                         var reason = isFlagged
                             ? data.label + ' (' + Math.round(data.confidence * 100) + '% confidence)'
                             : null;

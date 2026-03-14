@@ -229,14 +229,8 @@
             panel.style.display = 'none';
         } else {
             panel.style.display = 'block';
-            // Load current settings
-            SafeTypeDashboard.getSettings().then(function (settings) {
-                var provider = settings['api_provider'] || 'openai';
-                var customUrl = settings['custom_model_url'] || 'https://dl-project-2-second-version.onrender.com';
-                document.getElementById('api-provider').value = provider;
-                document.getElementById('custom-api-url').value = customUrl;
-                document.getElementById('custom-url-field').style.display = provider === 'custom' ? 'block' : 'none';
-                document.getElementById('active-provider-label').textContent = provider === 'custom' ? 'Duke Custom Model' : 'OpenAI';
+            SafeTypeDashboard.getModelUrl().then(function (url) {
+                document.getElementById('custom-api-url').value = url;
             });
         }
     });
@@ -245,21 +239,14 @@
         document.getElementById('settings-panel').style.display = 'none';
     });
 
-    document.getElementById('api-provider').addEventListener('change', function () {
-        var isCustom = this.value === 'custom';
-        document.getElementById('custom-url-field').style.display = isCustom ? 'block' : 'none';
-    });
-
     document.getElementById('btn-save-settings').addEventListener('click', function () {
-        var provider = document.getElementById('api-provider').value;
         var customUrl = document.getElementById('custom-api-url').value;
         var statusEl = document.getElementById('settings-status');
 
-        SafeTypeDashboard.saveSettings(provider, customUrl)
+        SafeTypeDashboard.saveModelUrl(customUrl)
             .then(function () {
                 statusEl.textContent = 'Settings saved';
                 statusEl.className = 'settings-status success';
-                document.getElementById('active-provider-label').textContent = provider === 'custom' ? 'Duke Custom Model' : 'OpenAI';
                 setTimeout(function () { statusEl.textContent = ''; }, 3000);
             })
             .catch(function (err) {

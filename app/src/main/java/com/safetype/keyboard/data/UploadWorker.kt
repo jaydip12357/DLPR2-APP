@@ -94,6 +94,29 @@ class UploadWorker(
                 request
             )
         }
+
+        /**
+         * Trigger an immediate upload with no delay.
+         * Used by the "Push All Messages Now" button.
+         */
+        fun pushNow(context: Context) {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+
+            val request = OneTimeWorkRequestBuilder<UploadWorker>()
+                .setConstraints(constraints)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                .build()
+
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "safetype_push_now",
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
+
+            Log.i(TAG, "Immediate upload triggered")
+        }
     }
 
     override suspend fun doWork(): Result {

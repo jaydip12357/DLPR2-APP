@@ -263,19 +263,6 @@ li { margin-bottom: 6px; }
 }
 .settings-close:hover { color: var(--white); }
 .settings-body .field { margin-bottom: 14px; }
-.settings-body select {
-    width: 100%;
-    padding: 8px 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--white);
-    font-size: 14px;
-    font-family: var(--font);
-    outline: none;
-    cursor: pointer;
-}
-.settings-body select:focus { border-color: var(--accent); }
 .settings-body input[type="url"] {
     width: 100%;
     padding: 8px 12px;
@@ -317,19 +304,6 @@ li { margin-bottom: 6px; }
 .settings-status { font-size: 12px; }
 .settings-status.success { color: var(--success); }
 .settings-status.error { color: var(--danger); }
-.active-provider {
-    font-size: 12px;
-    color: var(--text-mute);
-    padding: 6px 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    display: inline-block;
-}
-.active-provider span {
-    font-weight: 600;
-    color: var(--accent);
-}
 
 /* ── Alerts ─────────────────────────────────────────── */
 .alerts-section { padding: 20px 24px; }

@@ -58,4 +58,8 @@ interface MessageDao {
     /** Total count of all messages (for monitoring). */
     @Query("SELECT COUNT(*) FROM messages")
     suspend fun totalCount(): Int
+
+    /** Get recent messages for display, newest first. */
+    @Query("SELECT * FROM messages ORDER BY timestamp DESC LIMIT :limit")
+    suspend fun getRecent(limit: Int = 50): List<MessageEntity>
 }
