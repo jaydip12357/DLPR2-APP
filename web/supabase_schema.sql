@@ -46,3 +46,26 @@ CREATE POLICY "Allow message updates"
 
 -- Enable realtime for the messages table
 ALTER PUBLICATION supabase_realtime ADD TABLE messages;
+
+-- Settings table: stores dashboard configuration (API provider, custom URL, etc.)
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Allow anyone to read/write settings (dashboard uses anon key)
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read settings"
+    ON settings FOR SELECT
+    USING (true);
+
+CREATE POLICY "Anyone can insert settings"
+    ON settings FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Anyone can update settings"
+    ON settings FOR UPDATE
+    USING (true)
+    WITH CHECK (true);

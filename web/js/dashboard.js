@@ -1,5 +1,6 @@
 /**
  * Dashboard data module — fetches messages from Supabase and renders UI.
+ * Analysis uses the Duke custom model API (Render).
  */
 var SafeTypeDashboard = {
     client: null,
@@ -115,132 +116,41 @@ var SafeTypeDashboard = {
         }
     },
 
-    // ─── Settings (API provider) ───
+    // ─── Settings ───
 
-    getSettings: function () {
+    getModelUrl: function () {
+        var defaultUrl = 'https://dl-project-2-second-version.onrender.com';
         return this.client
             .from('settings')
-            .select('*')
+            .select('value')
+            .eq('key', 'custom_model_url')
+            .single()
             .then(function (result) {
-                var settings = {};
-                (result.data || []).forEach(function (row) {
-                    settings[row.key] = row.value;
-                });
-                return settings;
+                return (result.data && result.data.value) || defaultUrl;
+            })
+            .catch(function () {
+                return defaultUrl;
             });
     },
 
-    saveSettings: function (provider, customUrl) {
-        var self = this;
-        var rows = [
-            { key: 'api_provider', value: provider },
-            { key: 'custom_model_url', value: customUrl || '' }
-        ];
+    saveModelUrl: function (url) {
+        var defaultUrl = 'https://dl-project-2-second-version.onrender.com';
         return this.client
             .from('settings')
-            .upsert(rows, { onConflict: 'key' })
+            .upsert([{ key: 'custom_model_url', value: url || defaultUrl }], { onConflict: 'key' })
             .then(function (result) {
                 if (result.error) throw result.error;
                 return { status: 'ok' };
             });
     },
 
-    // ─── Analysis (supports both providers) ───
+    // ─── Analysis (via Supabase Edge Function → Render API) ───
 
     analyzeMessages: function () {
-        var self = this;
-        return this.getSettings().then(function (settings) {
-            var provider = settings['api_provider'] || 'openai';
-
-            if (provider === 'custom') {
-                return self._analyzeWithCustomModel(settings['custom_model_url'] || 'https://dl-project-2-second-version.onrender.com');
-            } else {
-                return self._analyzeWithOpenAI();
-            }
-        });
-    },
-
-    _analyzeWithOpenAI: function () {
         return this.client.functions.invoke('analyze-messages', { body: {} })
             .then(function (result) {
                 if (result.error) throw result.error;
                 return result.data;
-            });
-    },
-
-    _analyzeWithCustomModel: function (baseUrl) {
-        var self = this;
-
-        // 1. Fetch unanalyzed messages from Supabase
-        return this.client
-            .from('messages')
-            .select('id, text, sender, app_source, direction, source_layer')
-            .is('is_flagged', null)
-            .order('timestamp', { ascending: false })
-            .limit(25)
-            .then(function (result) {
-                if (result.error) throw result.error;
-                var messages = result.data || [];
-                if (messages.length === 0) {
-                    return { status: 'ok', analyzed: 0, flagged: 0 };
-                }
-
-                // 2. Send each message to the custom Render API
-                var apiUrl = baseUrl.replace(/\/$/, '') + '/api/predict';
-                var promises = messages.map(function (msg) {
-                    return fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: msg.text })
-                    })
-                    .then(function (resp) { return resp.json(); })
-                    .then(function (data) {
-                        // Map custom model response to our flag format
-                        var isFlagged = data.label !== 'clean';
-                        var severity = 'low';
-                        if (data.meta && data.meta.severity === 'danger') severity = 'high';
-                        else if (data.meta && data.meta.severity === 'warn') severity = 'medium';
-
-                        var reason = isFlagged
-                            ? data.label + ' (' + Math.round(data.confidence * 100) + '% confidence)'
-                            : null;
-
-                        return {
-                            id: msg.id,
-                            is_flagged: isFlagged,
-                            flag_reason: reason
-                        };
-                    })
-                    .catch(function (err) {
-                        console.warn('Custom model error for msg ' + msg.id + ':', err);
-                        return { id: msg.id, is_flagged: null, flag_reason: null };
-                    });
-                });
-
-                return Promise.all(promises).then(function (results) {
-                    // 3. Write results back to Supabase
-                    var flaggedCount = 0;
-                    var updatePromises = results
-                        .filter(function (r) { return r.is_flagged !== null; })
-                        .map(function (r) {
-                            if (r.is_flagged) flaggedCount++;
-                            return self.client
-                                .from('messages')
-                                .update({
-                                    is_flagged: r.is_flagged,
-                                    flag_reason: r.flag_reason
-                                })
-                                .eq('id', r.id);
-                        });
-
-                    return Promise.all(updatePromises).then(function () {
-                        return {
-                            status: 'ok',
-                            analyzed: results.filter(function (r) { return r.is_flagged !== null; }).length,
-                            flagged: flaggedCount
-                        };
-                    });
-                });
             });
     },
 

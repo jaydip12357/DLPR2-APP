@@ -458,27 +458,16 @@
                 </div>
                 <div class="settings-body">
                     <div class="field">
-                        <label for="api-provider">Analysis API</label>
-                        <select id="api-provider">
-                            <option value="openai">OpenAI (GPT-4o-mini) &mdash; default</option>
-                            <option value="custom">Duke Custom Model (Render)</option>
-                        </select>
-                    </div>
-                    <div id="custom-url-field" class="field" style="display:none">
-                        <label for="custom-api-url">Custom Model URL</label>
+                        <label for="custom-api-url">Custom Model API URL</label>
                         <input type="url" id="custom-api-url" placeholder="https://dl-project-2-second-version.onrender.com" value="https://dl-project-2-second-version.onrender.com">
-                        <p class="field-hint">Your Render API endpoint. Must accept POST /api/predict with {"text": "..."}</p>
+                        <p class="field-hint">Render API endpoint. Must accept POST /api/predict with {"text": "..."}</p>
                     </div>
                     <div class="settings-info">
-                        <p><strong>OpenAI:</strong> Uses GPT-4o-mini via Supabase Edge Function. Best for nuanced context understanding.</p>
-                        <p><strong>Duke Custom Model:</strong> Fine-tuned DistilBERT (10-class). Classifies: clean, racism, sexism, profanity, cyberbullying, toxicity, hate_speech, implicit_hate, threat, sarcasm.</p>
+                        <p><strong>Duke Custom Model:</strong> Fine-tuned DistilBERT (10-class). Classifies: clean, racism, sexism, profanity, cyberbullying, toxicity, hate_speech, implicit_hate, threat, sarcasm. Deployed at <a href="https://dl-project-2-second-version.onrender.com" target="_blank" rel="noopener">dl-project-2-second-version.onrender.com</a>.</p>
                     </div>
                     <div class="settings-actions">
                         <button id="btn-save-settings" class="btn btn-sm btn-primary">Save Settings</button>
                         <span id="settings-status" class="settings-status"></span>
-                    </div>
-                    <div id="active-provider-badge" class="active-provider">
-                        Active: <span id="active-provider-label">OpenAI</span>
                     </div>
                 </div>
             </div>
